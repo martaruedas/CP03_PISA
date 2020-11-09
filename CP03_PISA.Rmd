@@ -1,0 +1,248 @@
+---
+title: 'Informe PISA'
+author: "Marta Ruedas Burgos"
+date: "11/7/2020"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+# INTRODUCCIÓN
+ 
+PISA (The Programme for International Student Assessment) es un programa de evaluación para los estudiantes internacionales. PISA hace una encuesta que ocurre y se repite cada tres años sobre los conocimientos y habilidades de los jóvenes de 15 años. Los resultados se obtienen entre los países participantes y la economía a través de la OECD (Organisation for Economic Cooperation and Development). OECD se basa en el desarrolo de comparaciones entre países y culturas. Más de 400.000 estudiantes de 57 países que representan cerca del 90% de la economía mundial, participó en PISA 2006. 
+Empezaron centrandose en la ciencia, pero más adelante la evaluación de los datos recopilados sobre los estudiantes, familias e instituciones hicieron explicar con los resultados de los estudios estadísticos las diferencias en el rendimiento de los estudiantes. 
+
+# OBJETIVO 
+
+El objetivo es modelizar la relación entre la puntuación media (OSS) y el resto de variables, utilizando modelos de splines y GAM. Análisis de los datos que se encuentran en el fichero pisasci2006.csv. Evaluación de los diferentes modelos GAM y splines con sus respectivos gráficos.
+
+# LIBRERÍAS
+
+Importación de librerÍas necesarias para el caso práctico.
+```{r}
+library(readr)
+library(skimr)
+library(ggplot2)
+library(tidyverse)
+library(broom) # modelos en df
+library(flextable) # Tablas formateadas
+library(mgcv) # estimar gam
+library(reshape2) # melt
+library(splines)
+```
+
+# VARIABLES CLAVES:
+
+- Overall Science Score (average score for 15 year olds)
+
+- Interest in science
+
+- Support for scientific inquiry
+
+- Income Index
+
+- Health Index
+
+- Education Index
+
+- Human Development Index (composed of the Income index, Health Index, and Education Index)
+
+# DATASET
+
+```{r cars}
+pisa <- read_csv("pisasci2006.csv") 
+View(pisa)
+```
+
+# SUMMARIZE DATA
+```{r}
+skim(pisa)
+```
+
+# MODELO GAM 0
+
+```{r}
+gam_model0 <- gam(Overall ~ Interest + s(Support) + s(Income) + s(Health) + 
+                     s(Edu) + s(HDI), data = pisa, na.action = na.exclude)
+
+summary(gam_model0)
+
+par(mfrow = c(2, 3))
+plot(gam_model0, se = TRUE, col = 'red')
+
+gam.check(gam_model0)
+
+
+```
+
+# MODELO GAM 1
+
+```{r}
+gam_model1 <- gam(Overall ~ s(Interest) + Support + s(Income) + s(Health) + 
+                   s(Edu) + s(HDI), data = pisa, na.action = na.exclude)
+
+summary(gam_model1)
+
+par(mfrow = c(2, 3))
+plot(gam_model1, se = TRUE, col = 'blue')
+
+gam.check(gam_model1)
+
+```
+
+
+# MODELO GAM 2
+
+```{r}
+gam_model2 <- gam(Overall ~ s(Interest) + s(Support) + Income + s(Health) + 
+                   s(Edu) + s(HDI), data = pisa, na.action = na.exclude)
+
+summary(gam_model2)
+
+par(mfrow = c(2, 3))
+plot(gam_model2, se = TRUE, col = 'purple')
+
+gam.check(gam_model2)
+
+```
+
+
+# MODELO GAM 3
+
+```{r}
+gam_model3 <- gam(Overall ~ s(Interest) + s(Support) + s(Income) + Health + 
+                   s(Edu) + s(HDI), data = pisa, na.action = na.exclude)
+
+summary(gam_model3)
+
+par(mfrow = c(2, 3))
+plot(gam_model3, se = TRUE, col = 'orange')
+
+gam.check(gam_model3)
+
+```
+
+# MODELO GAM 4
+
+```{r}
+gam_model4 <- gam(Overall ~ s(Interest) + s(Support) + s(Income) + s(Health) + 
+                   Edu + s(HDI), data = pisa, na.action = na.exclude)
+
+summary(gam_model4)
+
+par(mfrow = c(2, 3))
+plot(gam_model4, se = TRUE, col = 'yellow')
+
+gam.check(gam_model4)
+
+```
+
+# MODELO GAM 5
+
+```{r}
+gam_model5 <- gam(Overall ~ s(Interest) + s(Support) + s(Income) + s(Health) + 
+                   s(Edu) + HDI, data = pisa, na.action = na.exclude)
+
+summary(gam_model5)
+
+par(mfrow = c(2, 3))
+plot(gam_model5, se = TRUE, col = 'green')
+
+gam.check(gam_model5)
+
+```
+
+# SPLIT
+
+Podemos observar el Spline de cada uno.
+
+# Interest
+Spline de Interest:
+```{r}
+gam_int_k50 <- gam(Overall ~ s(Interest, k = 50), data = pisa)
+plot(gam_int_k50, residuals = TRUE, pch = 1)
+```
+
+# Support
+Spline de Support:
+```{r}
+gam_sup_k30 <- gam(Overall ~ s(Support, k = 30), data = pisa)
+plot(gam_sup_k30, residuals = TRUE, pch = 1)
+```
+
+# Income
+Spline de Income:
+```{r}
+gam_inc_k50 <- gam(Overall ~ s(Income, k = 50), data = pisa)
+plot(gam_inc_k50, residuals = TRUE, pch = 1)
+```
+
+# Health
+Spline de Health:
+```{r}
+gam_hea_k50 <- gam(Overall ~ s(Health, k = 50), data = pisa)
+plot(gam_hea_k50, residuals = TRUE, pch = 1)
+```
+
+# Edu
+Spline de Edu:
+```{r}
+gam_edu_k50 <- gam(Overall ~ s(Edu, k = 50), data = pisa)
+plot(gam_edu_k50, residuals = TRUE, pch = 1)
+```
+
+# HDI
+Spline de HDI:
+```{r}
+gam_hdi_k20 <- gam(Overall ~ s(HDI, k = 20), data = pisa)
+plot(gam_hdi_k20, residuals = TRUE, pch = 1)
+```
+
+
+# Los Residuos Del Modelo GAM
+ Representación 
+ 
+# Modelo 0
+
+```{r}
+plot(gam_model0, residuals = TRUE, pch = 1)
+```
+
+# Modelo 1
+
+```{r}
+plot(gam_model1, residuals = TRUE, pch = 1)
+```
+
+# Modelo 2
+
+```{r}
+plot(gam_model2, residuals = TRUE, pch = 1)
+```
+
+# Modelo 3
+
+```{r}
+plot(gam_model3, residuals = TRUE, pch = 1)
+```
+
+# Modelo 4
+
+```{r}
+plot(gam_model4, residuals = TRUE, pch = 1)
+```
+
+# Modelo 5
+
+```{r}
+plot(gam_model5, residuals = TRUE, pch = 1)
+```
+
+
+# Enlace GitHub
+Enlace de acceso al repository GitHub con el código: https://github.com/martaruedas/CP03_PISA.git
+
+---
+email: marta.ruedas@cunef.edu
+---
